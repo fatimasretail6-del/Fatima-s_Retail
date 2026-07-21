@@ -683,28 +683,58 @@ function filteredPool(){
   );
 }
 
-function renderGrid(reset){
-  if(reset){ page=0; mainGrid.innerHTML=''; }
+); function renderGrid(reset){
+  if(reset){
+    page = 0;
+    mainGrid.innerHTML = '';
+  }
+
   const pool = filteredPool();
-  if(pool.length===0){
-    mainGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-soft); padding:40px 0;">No products match your search.</div>`;
+
+  if(pool.length === 0){
+    mainGrid.innerHTML = `
+      <div style="grid-column:1/-1; text-align:center; color:var(--text-soft); padding:40px 0;">
+        No products match your search.
+      </div>`;
     loaderRow.style.display='none';
     return;
   }
+
+  const start = page * PAGE_SIZE;
+
+  // Stop when all products are displayed
+  if(start >= pool.length){
+    loaderRow.style.display='none';
+    loading = false;
+    return;
+  }
+
   loaderRow.style.display='flex';
   loading = true;
-  setTimeout(()=>{ // simulate premium loading
-    const start = page*PAGE_SIZE;
-    const slice = [];
-    for(let i=0;i<PAGE_SIZE;i++){ slice.push(pool[(start+i)%pool.length]); }
-    mainGrid.insertAdjacentHTML('beforeend', slice.map(cardHTML).join(''));
+
+  setTimeout(()=>{
+
+    // Load only remaining products (no repeat)
+    const slice = pool.slice(start, start + PAGE_SIZE);
+
+    mainGrid.insertAdjacentHTML(
+      'beforeend',
+      slice.map(cardHTML).join('')
+    );
+
     page++;
     loading = false;
+
     observeCards();
-    // stop infinite growth if filtered pool small and we've shown a lot
-    if(page > 12) loaderRow.style.display='none';
+
+    // Hide loader after all products are shown
+    if(page * PAGE_SIZE >= pool.length){
+      loaderRow.style.display='none';
+    }
+
   }, 500);
 }
+
 renderGrid(true);
 
 window.addEventListener('scroll', ()=>{
